@@ -51,6 +51,7 @@ enum class SummaryType {
   X(GCC_CPP_14, "c++14") \
   X(GCC_CPP_17, "c++17") \
   X(GCC_CPP_20, "c++20") \
+  X(GCC_CPP_23, "c++23") \
   X(GCC_C_90, "c90") \
   X(GCC_C_99, "c99") \
   X(GCC_C_11, "c11") \
@@ -64,7 +65,6 @@ enum class Compiler {
   ENUM_COMPILER_
 #undef X
 };
-
 // the max of every subtasks would be the final result
 #define ENUM_VERDICT_ \
   X(NUL, "", "nil") \

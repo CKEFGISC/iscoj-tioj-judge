@@ -27,6 +27,7 @@ inline std::string CodeExtension(Compiler lang) {
     case Compiler::GCC_CPP_11: [[fallthrough]];
     case Compiler::GCC_CPP_14: [[fallthrough]];
     case Compiler::GCC_CPP_17: [[fallthrough]];
+    case Compiler::GCC_CPP_23: [[fallthrough]];
     case Compiler::GCC_CPP_20: return ".cpp";
     case Compiler::GCC_C_90: [[fallthrough]];
     case Compiler::GCC_C_99: [[fallthrough]];
@@ -47,6 +48,7 @@ inline std::string ProgramExtension(Compiler lang) {
     case Compiler::GCC_CPP_14: [[fallthrough]];
     case Compiler::GCC_CPP_17: [[fallthrough]];
     case Compiler::GCC_CPP_20: [[fallthrough]];
+    case Compiler::GCC_CPP_23: [[fallthrough]];
     case Compiler::GCC_C_90: [[fallthrough]];
     case Compiler::GCC_C_99: [[fallthrough]];
     case Compiler::GCC_C_11: [[fallthrough]];
@@ -138,6 +140,7 @@ fs::perms ExecuteBoxProgramPerm(Compiler lang, bool strict) {
     case Compiler::GCC_CPP_14: [[fallthrough]];
     case Compiler::GCC_CPP_17: [[fallthrough]];
     case Compiler::GCC_CPP_20: [[fallthrough]];
+    case Compiler::GCC_CPP_23: [[fallthrough]];
     case Compiler::GCC_C_90: [[fallthrough]];
     case Compiler::GCC_C_99: [[fallthrough]];
     case Compiler::GCC_C_11: [[fallthrough]];

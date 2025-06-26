@@ -5,3 +5,4 @@ build/
 .vscode/
 node_modules/
 temp/*
+.env

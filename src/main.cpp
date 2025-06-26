@@ -83,13 +83,10 @@ void ParseArgs(int argc, char** argv) {
     exit(1);
   }
 
-<<<<<<< HEAD
-=======
   if (parser["--version"] == true) {
     std::cout << kVersionCode << std::endl;
     exit(0);
   }
->>>>>>> 4e4dc329eb1b40014f3508cd34bd4c935a91fe7f
   switch (verbosity) {
     case 0: spdlog::set_level(spdlog::level::warn); break;
     case 1: spdlog::set_level(spdlog::level::info); break;
@@ -139,18 +136,12 @@ bool LockFile() {
 int main(int argc, char** argv) {
   spdlog::set_pattern("[%t] %+");
   InitLogger();
-<<<<<<< HEAD
-=======
   ParseArgs(argc, argv);
->>>>>>> 4e4dc329eb1b40014f3508cd34bd4c935a91fe7f
   if (geteuid() != 0) {
     spdlog::error("Must be run as root.");
     return 1;
   }
-<<<<<<< HEAD
   ParseArgs(argc, argv);
-=======
->>>>>>> 4e4dc329eb1b40014f3508cd34bd4c935a91fe7f
   if (to_lock && !LockFile()) {
     spdlog::error("Another judge instance is running.");
     return 1;
