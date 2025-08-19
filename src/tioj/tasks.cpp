@@ -25,8 +25,8 @@ std::vector<std::string> GccCompileCommand(
     case Compiler::GCC_CPP_11: prog = "g++", std = "-std=c++11"; break;
     case Compiler::GCC_CPP_14: prog = "g++", std = "-std=c++14"; break;
     case Compiler::GCC_CPP_17: prog = "g++", std = "-std=c++17"; break;
-    case Compiler::GCC_CPP_20: prog = "g++", std = "-std=c++20"; break;
-    case Compiler::GCC_CPP_23: prog = "g++-14", std = "-std=c++23"; break;
+    case Compiler::GCC_CPP_20: prog = "g++-15", std = "-std=c++20"; break;
+    case Compiler::GCC_CPP_23: prog = "g++-15", std = "-std=c++23"; break;
     case Compiler::GCC_C_90: prog = "gcc", std = "-ansi"; break;
     case Compiler::GCC_C_99: prog = "gcc", std = "-std=c99"; break;
     case Compiler::GCC_C_11: prog = "gcc", std = "-std=c11"; break;
@@ -34,6 +34,7 @@ std::vector<std::string> GccCompileCommand(
     default: __builtin_unreachable();
   }
   std::vector<std::string> ret = {"/usr/bin/env", prog, std, "-O2", "-w"};
+  if (lang == Compiler::GCC_CPP_20 || lang == Compiler::GCC_CPP_23) ret.push_back("-fmodules");
   if (is_static) ret.push_back("-static");
   ret.insert(ret.end(), {"-o", output, input});
   if (!interlib.empty()) ret.push_back(interlib);
