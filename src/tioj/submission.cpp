@@ -15,6 +15,7 @@
 #include "tasks.h"
 #include "utils.h"
 #include "paths.h"
+#include "modules.h"
 
 int kMaxParallel = 1;
 cpu_set_t kPinnedCpus = {};
@@ -808,6 +809,7 @@ std::pair<long, struct cjail_result> WaitTask() {
 
 void WorkLoop(bool loop) {
   umask(0022);
+  PreBuildCMI();
   std::unique_lock lck(task_mtx);
   do {
     // no task running here

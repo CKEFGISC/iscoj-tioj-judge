@@ -91,6 +91,8 @@ struct cjail_result RunCompile(const SubmissionAndResult& sub_and_result, const 
 
   SandboxOptions opt;
   opt.boxdir = CompileBoxPath(id, subtask);
+  if (lang == Compiler::GCC_CPP_20 || lang == Compiler::GCC_CPP_23)
+    fs::copy(kBoxRoot / "cmi", Workdir(opt.boxdir), fs::copy_options::recursive);
   switch (lang) {
     case Compiler::GCC_CPP_98: [[fallthrough]];
     case Compiler::GCC_CPP_11: [[fallthrough]];
