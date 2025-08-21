@@ -2,9 +2,11 @@
 #define INCLUDE_TIOJ_SUBMISSION_H_
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <filesystem>
 #include <functional>
+#include <format>
 
 #include <cjail/cjail.h>
 
@@ -65,6 +67,19 @@ enum class Compiler {
   ENUM_COMPILER_
 #undef X
 };
+template <>
+struct std::formatter<Compiler> : std::formatter<std::string_view> {
+  template <typename FmtContext>
+  auto format(const Compiler& compiler, FmtContext& ctx) const {
+    switch (compiler) {
+#define X(name, compname) case Compiler::name: return std::format_to(ctx.out(), compname);
+      ENUM_COMPILER_
+#undef X
+    }
+    __builtin_unreachable();
+  }
+};
+
 // the max of every subtasks would be the final result
 #define ENUM_VERDICT_ \
   X(NUL, "", "nil") \

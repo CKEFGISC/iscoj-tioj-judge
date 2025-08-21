@@ -34,7 +34,8 @@ std::vector<std::string> GccCompileCommand(
     default: __builtin_unreachable();
   }
   std::vector<std::string> ret = {"/usr/bin/env", prog, std, "-O2", "-w"};
-  if (lang == Compiler::GCC_CPP_20 || lang == Compiler::GCC_CPP_23) ret.push_back("-fmodules");
+  if (lang >= Compiler::GCC_CPP_20 && lang <= Compiler::GCC_CPP_23)
+    ret.insert(ret.end(), {"-fmodules", "-include", "bits/stdc++.h"});
   if (is_static) ret.push_back("-static");
   ret.insert(ret.end(), {"-o", output, input});
   if (!interlib.empty()) ret.push_back(interlib);
@@ -91,8 +92,8 @@ struct cjail_result RunCompile(const SubmissionAndResult& sub_and_result, const 
 
   SandboxOptions opt;
   opt.boxdir = CompileBoxPath(id, subtask);
-  if (lang == Compiler::GCC_CPP_20 || lang == Compiler::GCC_CPP_23)
-    fs::copy(kBoxRoot / "cmi", Workdir(opt.boxdir), fs::copy_options::recursive);
+  if (lang >= Compiler::GCC_CPP_20 && lang <= Compiler::GCC_CPP_23)
+    fs::copy(CompileCMIPath(lang), Workdir(opt.boxdir), fs::copy_options::recursive);
   switch (lang) {
     case Compiler::GCC_CPP_98: [[fallthrough]];
     case Compiler::GCC_CPP_11: [[fallthrough]];

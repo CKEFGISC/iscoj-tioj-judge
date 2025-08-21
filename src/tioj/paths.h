@@ -13,6 +13,7 @@ fs::path Workdir(fs::path&&);
 // if inside_box = true, id (and subtask of Execute/Scoring) is not used
 // those calls will have id (and subtask) marked as -1
 fs::path SubmissionRunPath(long id);
+fs::path CompileCMIPath(Compiler lang);
 fs::path CompileBoxPath(long id, CompileSubtask subtask);
 fs::path CompileBoxInput(long id, CompileSubtask subtask, Compiler lang, bool inside_box = false);
 fs::path CompileBoxInterlib(long id, int problem_id, bool inside_box = false);

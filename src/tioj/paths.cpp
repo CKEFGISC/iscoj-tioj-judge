@@ -102,6 +102,10 @@ fs::path SubmissionRunPath(long id) {
   return kBoxRoot / PadInt(id, 6);
 }
 
+fs::path CompileCMIPath(Compiler lang) {
+  return kBoxRoot / std::format("cmi/{}", lang);
+}
+
 fs::path CompileBoxPath(long id, CompileSubtask subtask) {
   return SubmissionRunPath(id) / ("compile" + std::to_string((int)subtask));
 }
