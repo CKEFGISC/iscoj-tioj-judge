@@ -57,6 +57,9 @@ enum class SummaryType {
   X(GCC_C_11, "c11") \
   X(GCC_C_17, "c17") \
   X(HASKELL, "haskell") \
+  X(RUST, "rustc") \
+  X(TYPESCRIPT, "typescript") \
+  X(JAVA, "java") \
   X(PYTHON2, "python2") \
   X(PYTHON3, "python3") \
   X(CUSTOM, "custom")

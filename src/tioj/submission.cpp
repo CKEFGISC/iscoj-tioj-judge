@@ -300,6 +300,9 @@ void FinalizeCompile(SubmissionAndResult& sub_and_result, const TaskEntry& task,
         message += "\n[Error message truncated after " + std::to_string(kMaxMsgLen) + " bytes]";
       }
       spdlog::debug("Message: {}", message);
+      if (!message.size() && sub.lang == Compiler::JAVA) {
+        message += "[Hint] Your main class must be named Main!";
+      }
     }
     switch (subtask) {
       case CompileSubtask::USERPROG: {
@@ -405,24 +408,26 @@ void FinalizeExecute(SubmissionAndResult& sub_and_result, const TaskEntry& task,
     td_result.rss = std::max(td_result.rss, (int64_t)cjail_res.rus.ru_maxrss);
     td_result.time += ToUs(cjail_res.rus.ru_utime) + ToUs(cjail_res.rus.ru_stime);
   }
-  if (cjail_res.timekill == -1) {
+  // java for some reason will exit early with error code 25 when it's killed, we hack that here
+  bool java_flag = sub.lang == Compiler::JAVA && cjail_res.oomkill == 25;
+  if (cjail_res.timekill == -1 && !java_flag) {
     // timekill = -1 means SandboxExec error (see sandbox_exec.cpp, sandbox_main.cpp)
     td_result.verdict = Verdict::EE;
-  } else if (cjail_res.oomkill > 0) {
+  } else if (cjail_res.oomkill > 0 && !java_flag) {
     // oomkill = -1 means failed to read oom (see cjail/cjail.h)
     td_result.verdict = Verdict::MLE;
-  } else if (cjail_res.timekill) {
+  } else if (cjail_res.timekill > 0) {
     td_result.verdict = Verdict::TLE;
   } else if (cjail_res.info.si_code == CLD_KILLED || cjail_res.info.si_code == CLD_DUMPED) {
     if (cjail_res.info.si_status == SIGXFSZ || (sub.sandbox_strict && cjail_res.info.si_status == SIGPIPE)) {
       td_result.verdict = Verdict::OLE;
-    } else if ((lim.vss && td_result.vss > lim.vss) || (lim.rss && td_result.rss > lim.rss)) {
+    } else if ((sub.lang != Compiler::JAVA && lim.vss && td_result.vss > lim.vss) || (lim.rss && td_result.rss > lim.rss)) {
       // MLE will likely cause SIGSEGV or std::bad_alloc (SIGABRT), so we check it before SIG
       td_result.verdict = Verdict::MLE;
     } else {
       td_result.verdict = Verdict::SIG;
     }
-  } else if ((lim.vss && td_result.vss > lim.vss) || (lim.rss && td_result.rss > lim.rss)) {
+  } else if ((sub.lang != Compiler::JAVA && lim.vss && td_result.vss > lim.vss) || (lim.rss && td_result.rss > lim.rss)) {
     td_result.verdict = Verdict::MLE;
   } else if (cjail_res.info.si_status != 0) {
     td_result.verdict = Verdict::RE;

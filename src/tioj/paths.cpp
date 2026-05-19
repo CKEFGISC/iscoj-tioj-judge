@@ -34,6 +34,7 @@ inline std::string CodeExtension(Compiler lang) {
     case Compiler::GCC_C_11: [[fallthrough]];
     case Compiler::GCC_C_17: return ".c";
     case Compiler::HASKELL: return ".hs";
+    case Compiler::JAVA: return ".java";
     case Compiler::PYTHON2: [[fallthrough]];
     case Compiler::PYTHON3: return ".py";
     case Compiler::CUSTOM: return "";
@@ -54,6 +55,7 @@ inline std::string ProgramExtension(Compiler lang) {
     case Compiler::GCC_C_11: [[fallthrough]];
     case Compiler::GCC_C_17: return "";
     case Compiler::HASKELL: return "";
+    case Compiler::JAVA: return ".class";
     case Compiler::PYTHON2: [[fallthrough]];
     case Compiler::PYTHON3: return ".pyc";
     case Compiler::CUSTOM: return "";
@@ -65,6 +67,7 @@ inline std::string CompileCodeName(CompileSubtask subtask, Compiler lang) {
   std::string extension = CodeExtension(lang);
   switch (subtask) {
     case CompileSubtask::USERPROG:
+      if (lang == Compiler::JAVA) return "Main" + extension;
       return "prog" + extension;
     case CompileSubtask::SPECJUDGE:
       return "judge" + extension;
@@ -147,6 +150,7 @@ fs::perms ExecuteBoxProgramPerm(Compiler lang, bool strict) {
     case Compiler::GCC_C_17:
       return fs::perms::owner_all | fs::perms::group_exec | fs::perms::others_exec; // 711
     case Compiler::HASKELL:
+    case Compiler::JAVA:
       return fs::perms::owner_all | fs::perms::group_exec | fs::perms::others_exec; // 711
     case Compiler::PYTHON2: [[fallthrough]];
     case Compiler::PYTHON3: [[fallthrough]];

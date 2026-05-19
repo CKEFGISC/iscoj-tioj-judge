@@ -54,6 +54,14 @@ std::vector<std::string> ExecuteCommand(Compiler lang, const std::string& progra
     case Compiler::GCC_C_11: [[fallthrough]];
     case Compiler::GCC_C_17: [[fallthrough]];
     case Compiler::HASKELL: return {program};
+    case Compiler::JAVA: return {
+      "/usr/bin/env", "java", 
+      "-XX:ActiveProcessorCount=1", "-Xms64m", "-Xmx128m", "-Xss2m", 
+      "-Xrs", "-Djava.awt.headless=true", "-Djdk.console=java.base", 
+      "-Dsun.stdout.encoding=UTF-8", "-Dsun.stderr.encoding=UTF-8",
+      "-XX:+UseSerialGC", "-XX:-UsePerfData",
+      "-jar", program
+    };
     case Compiler::PYTHON2: return {"/usr/bin/env", "python2", program};
     case Compiler::PYTHON3: return {"/usr/bin/env", "python3", program};
     case Compiler::CUSTOM: return {program};
@@ -109,6 +117,15 @@ struct cjail_result RunCompile(const SubmissionAndResult& sub_and_result, const 
       }
       break;
     }
+    case Compiler::JAVA:
+      opt.command = {
+        "/bin/sh", "-c", 
+        "javac -J-XX:ActiveProcessorCount=1 -J-Xms64m -J-Xmx128m -d . $1 && jar -J-XX:ActiveProcessorCount=1 -J-Xms64m -J-Xmx128m --create --file=$2 --main-class=Main .",
+        "--",
+        input,
+        output
+      };
+      break;
     case Compiler::PYTHON2:
       opt.command = {"/usr/bin/env", "python2", "-m", "py_compile", input}; break;
     case Compiler::PYTHON3: {
@@ -149,6 +166,11 @@ struct cjail_result RunCompile(const SubmissionAndResult& sub_and_result, const 
   opt.rss = kMaxRSS;
   opt.proc_num = 10;
   opt.fsize = kMaxOutput;
+  if (lang == Compiler::JAVA) {
+    opt.vss = 8 * 1024 * 1024;
+    opt.rss = 4 * 1024 * 1024;
+    opt.proc_num = 64;
+  }
   opt.dirs = {"/usr", "/var/lib", "/lib", "/lib64", "/etc/alternatives", "/bin"};
   opt.FilterDirs();
   return SandboxExec(opt);
@@ -157,6 +179,8 @@ struct cjail_result RunCompile(const SubmissionAndResult& sub_and_result, const 
 
 // TODO FEATURE(io-interactive): fork & run multiple cjails and merge them into one cjail_result
 struct cjail_result RunExecute(const SubmissionAndResult& sub_and_result, const Task& task, int uid, int cpuid) {
+  bool dev = true;
+
   const Submission& sub = sub_and_result.sub;
   long id = sub.submission_internal_id;
   int subtask = task.subtask;
@@ -187,13 +211,18 @@ struct cjail_result RunExecute(const SubmissionAndResult& sub_and_result, const 
   if (lim.rss == 0 || opt.rss > kMaxRSS) opt.rss = kMaxRSS;
   opt.vss = lim.vss ? lim.vss + 2048 : 0; // add some margin so we can determine whether it is MLE
   opt.proc_num = sub.process_limit;
+  if (sub.lang == Compiler::JAVA) {
+    opt.rss += 64 * 1024; // Slightly bigger RSS
+    opt.vss = 0; // Give up VSS
+    opt.proc_num = std::max(opt.proc_num, 64);
+  }
   // file limit is not needed since we have already limited the total size by mounting tmpfs
   opt.fsize = lim.output;
   if (opt.fsize == 0 || opt.fsize > kMaxOutput) opt.fsize = kMaxOutput;
   if (sub.sandbox_strict) {
-    if (sub.lang == Compiler::PYTHON2 || sub.lang == Compiler::PYTHON3) {
+    if (sub.lang == Compiler::PYTHON2 || sub.lang == Compiler::PYTHON3 || sub.lang == Compiler::JAVA) {
       // TODO: is it possible to run without /usr/bin and /bin? (maybe copy python executable to workdir)
-      opt.dirs = {"/usr", "/lib", "/lib64", "/etc/alternatives", "/bin"};
+      opt.dirs = {"/usr", "/lib", "/lib64", "/etc/alternatives", "/bin", "/proc", "/dev"};
     }
     int fd_input = open(ExecuteBoxInput(id, subtask, stage, sub.sandbox_strict).c_str(), O_RDONLY);
     int fd_output = open(ExecuteBoxOutput(id, subtask, stage, sub.sandbox_strict).c_str(), O_WRONLY | O_CREAT, 0600);
@@ -206,16 +235,19 @@ struct cjail_result RunExecute(const SubmissionAndResult& sub_and_result, const 
     close(fd_input), close(fd_output);
     opt.fd_input = pipes[0][0];
     opt.fd_output = pipes[1][1];
-    opt.error = "/dev/null";
+    if (!dev) opt.error = "/dev/null";
   } else {
-    opt.dirs = {"/usr", "/lib", "/lib64", "/etc/alternatives", "/bin"};
+    opt.dirs = {"/usr", "/lib", "/lib64", "/etc/alternatives", "/bin", "/proc", "/dev"};
     opt.input = ExecuteBoxInput(-1, -1, -1, sub.sandbox_strict, true);
     opt.output = ExecuteBoxOutput(-1, -1, -1, sub.sandbox_strict, true);
-    opt.error = ExecuteBoxError(-1, -1, -1, true);
+    if (!dev) opt.error = ExecuteBoxError(-1, -1, -1, true);
     // Output file is accounted in cgroups, so we need to extend RSS limit
     // MLE check will still be done by the original limit
     opt.rss += opt.fsize;
   }
+  if (dev) opt.fd_error = opt.fd_output;
+  if (char* path = getenv("PATH")) opt.envs.push_back(std::string("PATH=") + path);
+  if (sub.lang == Compiler::JAVA) opt.envs.push_back("TERM=dumb");
   opt.FilterDirs();
   // we don't need to close the opened files because the process is about to terminate
   return SandboxExec(opt);
